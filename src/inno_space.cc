@@ -57,7 +57,52 @@ static void usage()
       );
 }
 
-
+void PrintPageType(page_type_t page_type) {
+  const char *str_type;
+  if (page_type == FIL_PAGE_INDEX) {
+    str_type = "INDEX PAGE";
+  } else if (page_type == FIL_PAGE_RTREE) {
+    str_type = "RTREE PAGE";
+  } else if (page_type == FIL_PAGE_SDI) {
+    str_type = "SDI INDEX PAGE";
+  } else if (page_type == FIL_PAGE_UNDO_LOG) {
+    str_type = "UNDO LOG PAGE";
+  } else if (page_type == FIL_PAGE_INODE) {
+    str_type = "INDEX NODE PAGE";
+  } else if (page_type == FIL_PAGE_IBUF_FREE_LIST) {
+    str_type = "INSERT BUFFER FREE LIST";
+  } else if (page_type == FIL_PAGE_TYPE_ALLOCATED) {
+    str_type = "FRESHLY ALLOCATED PAGE";
+  } else if (page_type == FIL_PAGE_IBUF_BITMAP ) {
+    str_type = "INSERT BUFFER BITMAP";
+  } else if (page_type == FIL_PAGE_TYPE_SYS) {
+    str_type = "SYSTEM PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_TRX_SYS) {
+    str_type = "TRX SYSTEM PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_FSP_HDR) {
+    str_type = "FSP HDR";
+  } else if (page_type == FIL_PAGE_TYPE_XDES) {
+    str_type = "XDES";
+  } else if (page_type == FIL_PAGE_TYPE_BLOB) {
+    str_type = "UNCOMPRESSED BLOB PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_ZBLOB) {
+    str_type = "FIRST COMPRESSED BLOB PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_ZBLOB2) {
+    str_type = "SUBSEQUENT FRESHLY ALLOCATED PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_UNKNOWN) {
+    str_type = "UNDO TYPE PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_LOB_FIRST) {
+    str_type = "FIRST PAGE OF UNCOMPRESSED BLOB PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_LOB_INDEX) {
+    str_type = "INDEX PAGE OF UNCOMPRESSED BLOB PAGE";
+  } else if (page_type == FIL_PAGE_TYPE_LOB_DATA) {
+    str_type = "DATA PAGE OF UNCOMPRESSED BLOB PAGE";
+  } else {
+    str_type = "ERROR";
+  }
+  printf("%s", str_type);
+  
+}
 
 void ShowFILHeader(uint32_t page_num, uint16_t* type) {
   printf("==========================block==========================\n");
@@ -76,11 +121,23 @@ void ShowFILHeader(uint32_t page_num, uint16_t* type) {
   // printf("crc %u\n", cc);
 
   printf("Page number: %u\n", mach_read_from_4(read_buf + FIL_PAGE_OFFSET));
-  printf("Previous Page: %u\n", mach_read_from_4(read_buf + FIL_PAGE_PREV));
-  printf("Next Page: %u\n", mach_read_from_4(read_buf + FIL_PAGE_NEXT));
+  uint32_t prev_page = mach_read_from_4(read_buf + FIL_PAGE_PREV);
+  if (prev_page == UINT_MAX32) {
+    printf("Previous Page: -1\n");
+  } else {
+    printf("Previous Page: %u\n", prev_page);
+  }
+  uint32_t next_page = mach_read_from_4(read_buf + FIL_PAGE_NEXT);
+  if (next_page == UINT_MAX32) {
+    printf("Next Page: -1\n");
+  } else {
+    printf("Next Page: %u\n", next_page);
+  }
   printf("Page LSN: %lu\n", mach_read_from_8(read_buf + FIL_PAGE_LSN));
   *type = mach_read_from_2(read_buf + FIL_PAGE_TYPE);
-  printf("Page Type: %hu\n", *type);
+  printf("Page Type: ");
+  PrintPageType(*type);
+  printf("\n");
   printf("Flush LSN: %lu\n", mach_read_from_8(read_buf + FIL_PAGE_FILE_FLUSH_LSN));
 }
 
@@ -437,53 +494,6 @@ void ShowExtent()
     printf("Extent i %d status: %s\n", i, str_state); 
     
   }
-}
-
-void PrintPageType(page_type_t page_type) {
-  const char *str_type;
-  if (page_type == FIL_PAGE_INDEX) {
-    str_type = "INDEX PAGE";
-  } else if (page_type == FIL_PAGE_RTREE) {
-    str_type = "RTREE PAGE";
-  } else if (page_type == FIL_PAGE_SDI) {
-    str_type = "SDI INDEX PAGE";
-  } else if (page_type == FIL_PAGE_UNDO_LOG) {
-    str_type = "UNDO LOG PAGE";
-  } else if (page_type == FIL_PAGE_INODE) {
-    str_type = "INDEX NODE PAGE";
-  } else if (page_type == FIL_PAGE_IBUF_FREE_LIST) {
-    str_type = "INSERT BUFFER FREE LIST";
-  } else if (page_type == FIL_PAGE_TYPE_ALLOCATED) {
-    str_type = "FRESHLY ALLOCATED PAGE";
-  } else if (page_type == FIL_PAGE_IBUF_BITMAP ) {
-    str_type = "INSERT BUFFER BITMAP";
-  } else if (page_type == FIL_PAGE_TYPE_SYS) {
-    str_type = "SYSTEM PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_TRX_SYS) {
-    str_type = "TRX SYSTEM PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_FSP_HDR) {
-    str_type = "FSP HDR";
-  } else if (page_type == FIL_PAGE_TYPE_XDES) {
-    str_type = "XDES";
-  } else if (page_type == FIL_PAGE_TYPE_BLOB) {
-    str_type = "UNCOMPRESSED BLOB PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_ZBLOB) {
-    str_type = "FIRST COMPRESSED BLOB PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_ZBLOB2) {
-    str_type = "SUBSEQUENT FRESHLY ALLOCATED PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_UNKNOWN) {
-    str_type = "UNDO TYPE PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_LOB_FIRST) {
-    str_type = "FIRST PAGE OF UNCOMPRESSED BLOB PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_LOB_INDEX) {
-    str_type = "INDEX PAGE OF UNCOMPRESSED BLOB PAGE";
-  } else if (page_type == FIL_PAGE_TYPE_LOB_DATA) {
-    str_type = "DATA PAGE OF UNCOMPRESSED BLOB PAGE";
-  } else {
-    str_type = "ERROR";
-  }
-  printf("%s", str_type);
-  
 }
 
 void ShowSpacePageType() {
